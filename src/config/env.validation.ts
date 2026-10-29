@@ -4,6 +4,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsString,
+  IsTimeZone,
   Max,
   Min,
   MinLength,
@@ -47,6 +48,16 @@ export class EnvironmentVariables {
   @Min(4)
   @Max(15)
   BCRYPT_SALT_ROUNDS: number = 10;
+
+  /** Zona waktu untuk menentukan "hari ini" pada pengajuan cuti. */
+  @IsTimeZone()
+  APP_TIMEZONE: string = 'Asia/Jakarta';
+
+  /** Jatah cuti tahunan default untuk karyawan baru. */
+  @IsInt()
+  @Min(0)
+  @Max(365)
+  LEAVE_DEFAULT_QUOTA: number = 12;
 }
 
 /** Dipakai oleh ConfigModule: aplikasi gagal start jika env tidak valid. */

@@ -1,10 +1,9 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { createTestApp } from './utils/create-test-app';
 
 /**
  * Membutuhkan database yang berjalan sesuai DATABASE_URL.
@@ -18,21 +17,7 @@ describe('Auth (e2e)', () => {
   const employee = { email: 'e2e-employee@hr.local', password: 'Karyawan1!' };
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleRef.createNestApplication();
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    await app.init();
-
+    app = await createTestApp();
     prisma = app.get(PrismaService);
     await cleanup();
     await prisma.user.create({
