@@ -7,6 +7,8 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { validateEnv } from './config/env.validation';
+import { EmployeesModule } from './employees/employees.module';
+import { LeavesModule } from './leaves/leaves.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 
@@ -17,6 +19,8 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     AuthModule,
     UsersModule,
+    EmployeesModule,
+    LeavesModule,
   ],
   providers: [
     // Urutan penting: rate limit → autentikasi → otorisasi role.
