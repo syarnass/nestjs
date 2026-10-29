@@ -27,6 +27,17 @@ describe('date.util', () => {
       expect(count('2026-11-07', '2026-11-08')).toBe(0);
     });
 
+    it('tidak menghitung hari libur', () => {
+      const holidays = new Set(['2026-11-03', '2026-11-07']); // Selasa & Sabtu
+      expect(
+        countWorkingDays(
+          parseDateOnly('2026-11-02'),
+          parseDateOnly('2026-11-08'),
+          holidays,
+        ),
+      ).toBe(4);
+    });
+
     it('tanggal akhir sebelum tanggal mulai = 0 hari', () => {
       expect(count('2026-11-09', '2026-11-02')).toBe(0);
     });

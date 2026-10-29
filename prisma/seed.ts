@@ -70,8 +70,36 @@ async function seedSampleEmployees() {
   console.log(`Karyawan    : karyawan@hr.local / ${password}`);
 }
 
+/**
+ * Hanya hari libur nasional bertanggal tetap. Hari libur yang tanggalnya
+ * berubah tiap tahun (Idul Fitri, Nyepi, Imlek, Waisak, cuti bersama, dll.)
+ * ditambahkan ADMIN lewat `POST /api/holidays/bulk` sesuai SKB 3 Menteri.
+ */
+async function seedFixedHolidays() {
+  const fixed = [
+    ['01-01', 'Tahun Baru Masehi'],
+    ['05-01', 'Hari Buruh Internasional'],
+    ['06-01', 'Hari Lahir Pancasila'],
+    ['08-17', 'Hari Kemerdekaan Republik Indonesia'],
+    ['12-25', 'Hari Raya Natal'],
+  ];
+  const thisYear = new Date().getFullYear();
+
+  const { count } = await prisma.holiday.createMany({
+    data: [thisYear, thisYear + 1].flatMap((year) =>
+      fixed.map(([monthDay, name]) => ({
+        date: new Date(`${year}-${monthDay}T00:00:00.000Z`),
+        name,
+      })),
+    ),
+    skipDuplicates: true,
+  });
+  console.log(`Hari libur  : ${count} tanggal tetap ditambahkan`);
+}
+
 async function main() {
   await seedAdmin();
+  await seedFixedHolidays();
   if (process.env.NODE_ENV !== 'production') await seedSampleEmployees();
 }
 

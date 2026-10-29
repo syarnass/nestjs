@@ -82,7 +82,7 @@ model LeaveRequest {
   employeeId   Int         @map("employee_id")
   startDate    DateTime    @map("start_date") @db.Date
   endDate      DateTime    @map("end_date") @db.Date
-  /// Jumlah hari kerja (Senin–Jumat) yang dipotong dari saldo cuti.
+  /// Jumlah hari kerja (Senin–Jumat, di luar hari libur) yang dipotong dari saldo cuti.
   days         Int         @db.SmallInt
   reason       String      @db.VarChar(500)
   status       LeaveStatus @default(PENDING)
@@ -98,4 +98,15 @@ model LeaveRequest {
   @@index([employeeId, status])
   @@index([status])
   @@map("leave_requests")
+}
+
+/// Hari libur nasional / cuti bersama: tidak dihitung sebagai hari cuti.
+model Holiday {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @unique @db.Date
+  name      String   @db.VarChar(150)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("holidays")
 }

@@ -239,7 +239,7 @@ describe('Employees & Leaves (e2e)', () => {
     });
 
     it('karyawan bisa membatalkan pengajuan PENDING', async () => {
-      const { body: leave } = await submitLeave(mondayOf(5), mondayOf(5));
+      const { body: leave } = await submitLeave(mondayOf(10), mondayOf(10));
       const { body } = await http()
         .patch(`/api/leave-requests/${leave.id}/cancel`)
         .auth(staffToken, { type: 'bearer' })

@@ -8,6 +8,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { validateEnv } from './config/env.validation';
 import { EmployeesModule } from './employees/employees.module';
+import { HolidaysModule } from './holidays/holidays.module';
 import { LeavesModule } from './leaves/leaves.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
@@ -20,6 +21,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     EmployeesModule,
+    HolidaysModule,
     LeavesModule,
   ],
   providers: [

@@ -9,12 +9,9 @@ import { ConfigService } from '@nestjs/config';
 import { LeaveStatus, Prisma, Role } from '@prisma/client';
 import { AuthUser } from '../auth/interfaces/jwt-payload.interface';
 import { paginate, Paginated } from '../common/dto/pagination-query.dto';
-import {
-  countWorkingDays,
-  parseDateOnly,
-  todayDateOnly,
-} from '../common/utils/date.util';
+import { parseDateOnly, todayDateOnly } from '../common/utils/date.util';
 import { EmployeesService } from '../employees/employees.service';
+import { WorkingDaysService } from '../holidays/working-days.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLeaveRequestDto } from './dto/create-leave-request.dto';
 import {
@@ -36,6 +33,7 @@ export class LeaveRequestsService {
     private readonly prisma: PrismaService,
     private readonly employeesService: EmployeesService,
     private readonly balancesService: LeaveBalancesService,
+    private readonly workingDays: WorkingDaysService,
     private readonly config: ConfigService,
   ) {}
 
@@ -63,10 +61,10 @@ export class LeaveRequestsService {
       );
     }
 
-    const days = countWorkingDays(startDate, endDate);
+    const days = await this.workingDays.count(startDate, endDate);
     if (days === 0) {
       throw new BadRequestException(
-        'Rentang tanggal tidak mengandung hari kerja',
+        'Rentang tanggal hanya berisi akhir pekan / hari libur',
       );
     }
 

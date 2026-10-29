@@ -2,8 +2,8 @@
 
 Backend aplikasi HR: data karyawan, pengajuan cuti, dan approval atasan.
 
-> **Status:** autentikasi JWT, manajemen user, data karyawan, serta
-> pengajuan & approval cuti sudah tersedia.
+> **Status:** autentikasi JWT, manajemen user, data karyawan, hari libur
+> nasional, serta pengajuan & approval cuti sudah tersedia.
 
 ## Tech Stack
 
@@ -39,9 +39,11 @@ src/
 │   └── auth.service.ts
 ├── users/                      # CRUD akun user (khusus ADMIN)
 ├── employees/                  # data karyawan & hierarki atasan
+├── holidays/                   # hari libur & perhitungan hari kerja
 └── leaves/                     # saldo cuti, pengajuan, approval
 test/
 ├── auth.e2e-spec.ts
+├── holidays.e2e-spec.ts
 └── leaves.e2e-spec.ts
 ```
 
@@ -112,6 +114,37 @@ Atasan harus ber-role `MANAGER`/`ADMIN`, tidak boleh diri sendiri, dan tidak
 boleh membentuk hierarki melingkar. Menonaktifkan karyawan dilakukan lewat
 `PATCH /api/users/:id` dengan `isActive: false`.
 
+## Hari Libur
+
+| Method | Endpoint             | Akses | Keterangan                                        |
+|--------|----------------------|-------|---------------------------------------------------|
+| GET    | `/api/holidays`      | Login | Daftar hari libur (`?year=`, default tahun ini)   |
+| POST   | `/api/holidays`      | ADMIN | Tambah satu hari libur `{ date, name }`           |
+| POST   | `/api/holidays/bulk` | ADMIN | Import banyak sekaligus; tanggal yang sudah ada dilewati |
+| PATCH  | `/api/holidays/:id`  | ADMIN | Ubah nama / tanggal                               |
+| DELETE | `/api/holidays/:id`  | ADMIN | Hapus hari libur                                  |
+
+Seed hanya menambahkan hari libur **bertanggal tetap** (1 Jan, 1 Mei, 1 Jun,
+17 Agu, 25 Des) untuk tahun ini dan tahun depan. Hari libur yang tanggalnya
+berubah setiap tahun (Imlek, Isra Mi'raj, Nyepi, Idul Fitri, Waisak, Idul Adha,
+dll.) serta **cuti bersama** perlu diimpor ADMIN sesuai SKB 3 Menteri:
+
+```bash
+curl -X POST http://localhost:3000/api/holidays/bulk \
+  -H "Authorization: Bearer <token-admin>" \
+  -H "Content-Type: application/json" \
+  -d '{ "holidays": [
+        { "date": "2027-03-10", "name": "Hari Raya Idul Fitri" },
+        { "date": "2027-03-11", "name": "Hari Raya Idul Fitri" }
+      ] }'
+```
+
+> Tanggal di atas hanya contoh format, gunakan tanggal resmi dari pemerintah.
+
+Saat hari libur ditambah, diubah, atau dihapus, jumlah hari pada pengajuan
+cuti yang masih **PENDING** dihitung ulang otomatis. Cuti yang sudah diproses
+(APPROVED, dll.) tidak diubah agar saldo yang sudah terpotong tetap konsisten.
+
 ## Cuti
 
 ### Alur
@@ -147,8 +180,8 @@ Contoh response saldo:
 
 ### Aturan bisnis
 
-- Jumlah hari = **hari kerja (Senin–Jumat)**; akhir pekan tidak dihitung.
-  Hari libur nasional belum diperhitungkan.
+- Jumlah hari = **hari kerja**: akhir pekan dan hari libur (tabel `holidays`)
+  tidak dihitung.
 - Jatah default per tahun diatur lewat `LEAVE_DEFAULT_QUOTA` (default 12) dan
   dibuat otomatis saat pertama kali dibutuhkan; ADMIN bisa mengubahnya per karyawan.
 - Tanggal mulai tidak boleh lewat (menurut `APP_TIMEZONE`, default `Asia/Jakarta`),

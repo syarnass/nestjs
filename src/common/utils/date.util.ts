@@ -22,8 +22,15 @@ export function todayDateOnly(timeZone: string): Date {
   return parseDateOnly(today);
 }
 
-/** Jumlah hari kerja (Senin–Jumat) dari `start` sampai `end`, inklusif. */
-export function countWorkingDays(start: Date, end: Date): number {
+/**
+ * Jumlah hari kerja (Senin–Jumat, bukan hari libur) dari `start` sampai
+ * `end`, inklusif. `holidays` berisi tanggal berformat YYYY-MM-DD.
+ */
+export function countWorkingDays(
+  start: Date,
+  end: Date,
+  holidays: ReadonlySet<string> = new Set(),
+): number {
   let count = 0;
   for (
     const day = new Date(start);
@@ -31,7 +38,8 @@ export function countWorkingDays(start: Date, end: Date): number {
     day.setUTCDate(day.getUTCDate() + 1)
   ) {
     const weekday = day.getUTCDay();
-    if (weekday !== 0 && weekday !== 6) count++;
+    const isWeekend = weekday === 0 || weekday === 6;
+    if (!isWeekend && !holidays.has(formatDateOnly(day))) count++;
   }
   return count;
 }
