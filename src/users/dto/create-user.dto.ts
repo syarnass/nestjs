@@ -1,11 +1,12 @@
+import { Role } from '@prisma/client';
 import {
   IsEmail,
-  IsInt,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsStrongPassword,
   MaxLength,
-  Min,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -15,10 +16,14 @@ export class CreateUserDto {
   name: string;
 
   @IsEmail()
+  @MaxLength(191)
   email: string;
 
+  /** Minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol. */
+  @IsStrongPassword()
+  password: string;
+
   @IsOptional()
-  @IsInt()
-  @Min(0)
-  age?: number;
+  @IsEnum(Role)
+  role?: Role;
 }

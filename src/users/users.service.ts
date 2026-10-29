@@ -1,59 +1,62 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { PublicUser, publicUserSelect } from './users.select';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
-  async create(dto: CreateUserDto) {
-    try {
-      return await this.prisma.user.create({ data: dto });
-    } catch (e) {
-      this.handleError(e);
-    }
+  async create(dto: CreateUserDto): Promise<PublicUser> {
+    return this.prisma.user.create({
+      data: { ...dto, password: await this.hashPassword(dto.password) },
+      select: publicUserSelect,
+    });
   }
 
-  findAll() {
-    return this.prisma.user.findMany({ orderBy: { id: 'asc' } });
+  findAll(): Promise<PublicUser[]> {
+    return this.prisma.user.findMany({
+      select: publicUserSelect,
+      orderBy: { id: 'asc' },
+    });
   }
 
-  async findOne(id: number) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+  async findOne(id: number): Promise<PublicUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: publicUserSelect,
+    });
     if (!user) {
       throw new NotFoundException(`User dengan id ${id} tidak ditemukan`);
     }
     return user;
   }
 
-  async update(id: number, dto: UpdateUserDto) {
+  async update(id: number, dto: UpdateUserDto): Promise<PublicUser> {
     await this.findOne(id);
-    try {
-      return await this.prisma.user.update({ where: { id }, data: dto });
-    } catch (e) {
-      this.handleError(e);
-    }
+    return this.prisma.user.update({
+      where: { id },
+      // Menonaktifkan user sekaligus mengakhiri sesinya.
+      data: dto.isActive === false ? { ...dto, refreshTokenHash: null } : dto,
+      select: publicUserSelect,
+    });
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<PublicUser> {
     await this.findOne(id);
-    return this.prisma.user.delete({ where: { id } });
+    return this.prisma.user.delete({ where: { id }, select: publicUserSelect });
   }
 
-  private handleError(e: unknown): never {
-    // P2002 = unique constraint violation (email sudah dipakai)
-    if (
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === 'P2002'
-    ) {
-      throw new ConflictException('Email sudah terdaftar');
-    }
-    throw e;
+  hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(
+      password,
+      this.config.getOrThrow<number>('BCRYPT_SALT_ROUNDS'),
+    );
   }
 }
